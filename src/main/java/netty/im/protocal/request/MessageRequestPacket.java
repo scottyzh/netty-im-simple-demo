@@ -1,6 +1,7 @@
 package netty.im.protocal.request;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import netty.im.protocal.Packet;
 import static netty.im.protocal.command.Command.MESSAGE_REQUEST;
 
@@ -11,6 +12,7 @@ import static netty.im.protocal.command.Command.MESSAGE_REQUEST;
  *  @Author    : zh
  ********************************/
 @Data
+@NoArgsConstructor
 public class MessageRequestPacket extends Packet {
     private String toUserId;
     private String message;

@@ -21,14 +21,14 @@ public class PacketCodecHandler extends MessageToMessageCodec<ByteBuf, Packet> {
     public static final PacketCodecHandler INSTANCE = new PacketCodecHandler();
 
     @Override
-    protected void encode(ChannelHandlerContext channelHandlerContext, Packet packet, List<Object> out) throws Exception {
+    protected void encode(ChannelHandlerContext channelHandlerContext, Packet packet, List<Object> out) {
         ByteBuf byteBuf = channelHandlerContext.channel().alloc().ioBuffer();
         PacketCodec.INSTANCE.encode(byteBuf, packet);
         out.add(byteBuf);
     }
 
     @Override
-    protected void decode(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf, List<Object> out) throws Exception {
+    protected void decode(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf, List<Object> out){
         out.add(PacketCodec.INSTANCE.decode(byteBuf));
     }
 }

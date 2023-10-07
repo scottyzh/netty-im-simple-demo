@@ -1,11 +1,18 @@
 package netty.im.server;
 
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-
-import static jdk.nashorn.internal.objects.NativeFunction.bind;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import netty.im.codec.PacketCodecHandler;
+import netty.im.codec.Spliter;
+import netty.im.handler.IMIdleStateHandler;
+import netty.im.server.handler.AuthHandler;
+import netty.im.server.handler.HeartBeatRequestHandler;
+import netty.im.server.handler.IMHandler;
+import netty.im.server.handler.LoginRequestHandler;
 
 /********************************
  *  @Class     : NettyServer 
@@ -36,7 +43,19 @@ public class NettyServer {
                 .option(ChannelOption.SO_BACKLOG, 1024)
                 .childOption(ChannelOption.SO_KEEPALIVE, true)
                 // TCP_NODELAY就是用于启用或关于Nagle算法。如果要求高实时性,有数据发送时就马上发送,就将该选项设置为true关闭Nagle算法;如果要减少发送次数减少网络交互,就设置为false等累积一定大小后再发送
-                .childOption(ChannelOption.TCP_NODELAY, true);
+                .childOption(ChannelOption.TCP_NODELAY, true)
+                .childHandler(new ChannelInitializer<NioSocketChannel>() {
+                    protected void initChannel(NioSocketChannel ch) {
+                        // 空闲检测
+                        ch.pipeline().addLast(new IMIdleStateHandler());
+                        ch.pipeline().addLast(new Spliter());
+                        ch.pipeline().addLast(PacketCodecHandler.INSTANCE);
+                        ch.pipeline().addLast(LoginRequestHandler.INSTANCE);
+                        ch.pipeline().addLast(HeartBeatRequestHandler.INSTANCE);
+                        ch.pipeline().addLast(AuthHandler.INSTANCE);
+                        ch.pipeline().addLast(IMHandler.INSTANCE);
+                    }
+                });
         // 4.绑定端口
         bind(serverBootstrap, PORT);
     }

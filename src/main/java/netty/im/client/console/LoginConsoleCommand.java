@@ -23,7 +23,17 @@ public class LoginConsoleCommand implements ConsoleCommand {
 
         // 发送登录数据包
         channel.writeAndFlush(loginRequestPacket);
+
+        // 这里很重要 需要等待登录返回结果 不然会重复要求输入用户名
+        waitForLoginResponse();
     }
 
+
+    private static void waitForLoginResponse() {
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException ignored) {
+        }
+    }
 
 }

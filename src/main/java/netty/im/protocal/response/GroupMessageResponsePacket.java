@@ -1,6 +1,7 @@
 package netty.im.protocal.response;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import netty.im.protocal.Packet;
 import netty.im.protocal.session.Session;
 
@@ -13,6 +14,7 @@ import static netty.im.protocal.command.Command.GROUP_MESSAGE_RESPONSE;
  *  @Author    : zh
  ********************************/
 @Data
+@NoArgsConstructor
 public class GroupMessageResponsePacket extends Packet {
 
     private String fromGroupId;

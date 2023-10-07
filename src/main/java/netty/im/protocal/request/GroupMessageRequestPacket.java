@@ -1,6 +1,7 @@
 package netty.im.protocal.request;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import netty.im.protocal.Packet;
 
 import static netty.im.protocal.command.Command.GROUP_MESSAGE_REQUEST;
@@ -12,6 +13,7 @@ import static netty.im.protocal.command.Command.GROUP_MESSAGE_REQUEST;
  *  @Author    : zh
  ********************************/
 @Data
+@NoArgsConstructor // 需要无参构造 不然序列化会失败
 public class GroupMessageRequestPacket extends Packet {
     private String toGroupId;
     private String message;

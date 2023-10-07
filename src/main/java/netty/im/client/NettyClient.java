@@ -10,11 +10,10 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import netty.im.client.console.ConsoleCommandManager;
 import netty.im.client.console.LoginConsoleCommand;
-import netty.im.client.handler.LoginResponseHandler;
-import netty.im.client.handler.LogoutResponseHandler;
-import netty.im.client.handler.MessageResponseHandler;
+import netty.im.client.handler.*;
 import netty.im.codec.PacketCodecHandler;
 import netty.im.codec.Spliter;
+import netty.im.handler.IMIdleStateHandler;
 import netty.im.util.SessionUtil;
 
 import java.util.Date;
@@ -33,7 +32,7 @@ public class NettyClient {
 
     private static final String HOST = "127.0.0.1";
 
-    private static final int PORT = 8000;
+    private static final int PORT = 9000;
 
     public static void main(String[] args) {
         // 创建工作线程组
@@ -56,18 +55,32 @@ public class NettyClient {
                 .handler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     public void initChannel(SocketChannel ch) {
-                        // 添加拆包器
+                        // 空闲检测
+                        ch.pipeline().addLast(new IMIdleStateHandler());
+
                         ch.pipeline().addLast(new Spliter());
+
                         ch.pipeline().addLast(PacketCodecHandler.INSTANCE);
 
-                        // 添加登录响应处理器
+                        // 登录响应处理器
                         ch.pipeline().addLast(new LoginResponseHandler());
-                        // 添加消息响应处理器
+                        // 收消息处理器
                         ch.pipeline().addLast(new MessageResponseHandler());
-                        // 添加登出响应处理器
+                        // 创建群响应处理器
+                        ch.pipeline().addLast(new CreateGroupResponseHandler());
+                        // 加群响应处理器
+                        ch.pipeline().addLast(new JoinGroupResponseHandler());
+                        // 退群响应处理器
+                        ch.pipeline().addLast(new QuitGroupResponseHandler());
+                        // 获取群成员响应处理器
+                        ch.pipeline().addLast(new ListGroupMembersResponseHandler());
+                        // 群消息响应
+                        ch.pipeline().addLast(new GroupMessageResponseHandler());
+                        // 登出响应处理器
                         ch.pipeline().addLast(new LogoutResponseHandler());
 
-
+                        // 心跳定时器
+                        ch.pipeline().addLast(new HeartBeatTimerHandler());
                     }
                 });
         // 连接服务器
@@ -75,24 +88,19 @@ public class NettyClient {
     }
 
     private static void connect(Bootstrap bootstrap, String host, int port, int retry) {
-        // 连接服务器
         bootstrap.connect(host, port).addListener(future -> {
-            // 连接成功
             if (future.isSuccess()) {
-                System.out.println("连接成功!");
-                // 获取通道
+                System.out.println(new Date() + ": 连接成功，启动控制台线程……");
                 Channel channel = ((ChannelFuture) future).channel();
                 startConsoleThread(channel);
             } else if (retry == 0) {
-                // 连接失败
-                System.err.println("重试次数已用完，放弃连接!");
+                System.err.println("重试次数已用完，放弃连接！");
             } else {
                 // 第几次重连
                 int order = (MAX_RETRY - retry) + 1;
-                // 本次重连间隔
+                // 本次重连的间隔
                 int delay = 1 << order;
                 System.err.println(new Date() + ": 连接失败，第" + order + "次重连……");
-                // 重连
                 bootstrap.config().group().schedule(() -> connect(bootstrap, host, port, retry - 1), delay, TimeUnit
                         .SECONDS);
             }
